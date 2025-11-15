@@ -16,6 +16,7 @@ func TestDeclarationStatement(t *testing.T) {
 	parser := New(lex)
 
 	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
 
 	if program == nil {
 		t.Fatal("ParseProgam() return nil")
@@ -64,4 +65,104 @@ func TestDeclarationStatement(t *testing.T) {
 		}
 		
 	}
+}
+
+func TestReturnStatement(t *testing.T) {
+	input := `
+	return 5;
+	return 10;
+	return 993322;
+	`
+	lex := lexer.New(input)
+	parser := New(lex)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if len(program.Statements) != 3 {
+		t.Fatalf(
+			"Expected program.Statements to contains 3 statements, but got %d\n",
+			len(program.Statements),
+		)
+	}
+
+	for _, stmt := range program.Statements {
+		returnStmt, ok := stmt.(*ast.ReturnStatement)
+
+		if !ok {
+			t.Errorf(
+				"Expecting stmt to be a ast.ReturnStatement, but got %T\n",
+				stmt,
+			)
+			continue
+		}
+
+		if returnStmt.TokenLiteral() != "return" {
+			t.Errorf(
+				"Expected returnStmt.TokenLiteral() to return \"return\", but got %q\n",
+				returnStmt.TokenLiteral(),
+			)
+		}
+	}
+}
+
+func TestIdentifierExpression(t *testing.T) {
+	input := "foobar"
+	lex := lexer.New(input)
+	parser := New(lex)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf(
+			"Expected program.Statements to contains 1 statements, but got %d\n",
+			len(program.Statements),
+		)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting program.Statements[0] to be a ast.ExpressionStatement, but got %T\n",
+			stmt,
+		)
+	}
+
+	identifier, ok := stmt.Expression.(*ast.Identifier)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting stmt to be a ast.Indentifier, but got %T\n",
+			stmt.Expression,
+		)
+	}
+
+	if identifier.Value != input {
+		t.Errorf(
+			"Expecting identifier.Value to be %q, but got=%q",
+			input, identifier.Value,
+		)
+	}
+	
+	if identifier.TokenLiteral() != input {
+		t.Errorf(
+			"Expecting identifier.TokenLiteral() to return %q, but got=%q",
+			input, identifier.TokenLiteral(),
+		)
+	}
+}
+
+func checkParserErrors(t *testing.T, parser *Parser) {
+	errors := parser.errors;
+
+	if len(errors) == 0 { return }
+
+	t.Errorf("Parser has %d error(s).\n", len(errors))
+
+	for msg := range errors {
+		t.Errorf("Parser error: %q\n", msg)
+	}
+	t.FailNow()
 }

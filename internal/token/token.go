@@ -8,7 +8,7 @@ import (
 type TokenType int
 
 const (
-	EOF = iota
+	EOF TokenType = iota
 	ILLEGAL
 
 	// identifiers, ...etc
