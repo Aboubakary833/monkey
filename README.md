@@ -3,7 +3,7 @@
 ## Introduction
 
 **Monkey** is a little programming language designed by Thorsten Ball for his book `Writing an interpreter in Go`.
-This repository contains my implementation of the language with little changes I decided to do like supporting all type of number(<i>int, float, negative numbers</i>) and <i>constants</i>.
+This repository contains my implementation of the language with little changes I decided to do like supporting all type of number(<i>int, float</i>) and <i>constants</i>.
 
 ## Main features of the language
 

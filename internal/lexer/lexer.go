@@ -92,9 +92,7 @@ func (lex *Lexer) readWord() string {
 	return lex.input[currentPos:lex.currentPos]
 }
 
-// readNumber read and return a number and a boolean that specify
-// the type of the number. If true is return the number is an
-// integer, otherwise it's a float.
+// readNumber read and return the value and the type of the number.
 func (lex *Lexer) readNumber() (string, token.TokenType) {
 	var number string
 
