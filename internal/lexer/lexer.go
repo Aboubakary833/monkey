@@ -23,7 +23,7 @@ func (lex *Lexer) NextToken() (_token token.Token) {
 	case lex.char == 0:
 		_token = lex.newToken(token.EOF, "")
 
-	case helper.IsDigit(lex.char):
+	case lex.isStartOfNumber():
 		literal, _type := lex.readNumber()
 		_token.Literal = literal
 		_token.Type = _type
@@ -98,9 +98,8 @@ func (lex *Lexer) readNumber() (string, token.TokenType) {
 
 	_type := token.INTEGER
 
-	for helper.IsDigit(lex.char) || (_type == token.INTEGER && lex.char == '.') {
-		
-		if lex.char == '.' && helper.IsDigit(lex.peekChar()) {
+	for helper.IsDigit(lex.char) || lex.char == '.' {
+		if lex.char == '.' {
 			_type = token.FLOAT
 			number += string(lex.char)
 		} else {
@@ -111,6 +110,10 @@ func (lex *Lexer) readNumber() (string, token.TokenType) {
 	}
 
 	return number, _type
+}
+
+func (lex *Lexer) isStartOfNumber() bool {
+	return helper.IsDigit(lex.char) || (lex.char == '.' && helper.IsDigit(lex.peekChar()))
 }
 
 func (lex *Lexer) newToken(_type token.TokenType, literal string) token.Token {
