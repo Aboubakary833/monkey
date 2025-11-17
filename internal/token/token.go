@@ -13,7 +13,8 @@ const (
 
 	// identifiers, ...etc
 	IDENTIFIER
-	NUMBER
+	INTEGER
+	FLOAT
 
 	// Operators
 	ASSIGN

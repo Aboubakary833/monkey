@@ -154,6 +154,105 @@ func TestIdentifierExpression(t *testing.T) {
 	}
 }
 
+func TestIntegerLiteralExpression(t *testing.T) {
+	input := "5;"
+	lex := lexer.New(input)
+	parser := New(lex)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf(
+			"Expecting program.Statements to contains 1 statement, but got %d\n",
+			len(program.Statements),
+		)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting program.Statement[0] to be of type *ast.ExpressionStatement, but got %T\n",
+			stmt,
+		)
+	}
+
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting stmt.Expression to be of type *ast.IntegerLiteral, but got %T\n",
+			literal,
+		)
+	}
+
+
+	if literal.Value != 5 {
+		t.Fatalf(
+			"Expecting literal.Value to be '5', but got '%d'\n",
+			literal.Value,
+		)
+	}
+
+	if literal.TokenLiteral() != "5" {
+		t.Fatalf(
+			"Expecting literal.TokenLiteral to return '5', but got %q\n",
+			literal.TokenLiteral(),
+		)
+	}
+}
+
+func TestFloatLiteralExpression(t *testing.T) {
+	input := "10.5;"
+	lex := lexer.New(input)
+	parser := New(lex)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf(
+			"Expecting program.Statements to contains 1 Statement, but got %d\n",
+			len(program.Statements),
+		)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting program.Statement[0] to be of type *ast.ExpressionStatement, but got %T\n",
+			stmt,
+		)
+	}
+
+	literal, ok := stmt.Expression.(*ast.FloatLiteral)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting stmt.Expression to be of type *ast.FloatLiteral, but got %T\n",
+			literal,
+		)
+	}
+
+
+	if literal.Value != 10.5 {
+		t.Fatalf(
+			"Expecting literal.Value to be '10.5', but got '%.f'\n",
+			literal.Value,
+		)
+	}
+
+	if literal.TokenLiteral() != "10.5" {
+		t.Fatalf(
+			"Expecting literal.TokenLiteral to return '10.5', but got %q\n",
+			literal.TokenLiteral(),
+		)
+	}
+}
+
+
 func checkParserErrors(t *testing.T, parser *Parser) {
 	errors := parser.errors;
 

@@ -180,7 +180,7 @@ return true;
 return false;
 }
 10 == 10;
-10 != 9;
+10.5 != 9;
 `
 
 	tests := []struct {
@@ -190,12 +190,12 @@ return false;
 		{token.CONST, "const"},
 		{token.IDENTIFIER, "five"},
 		{token.ASSIGN, "="},
-		{token.NUMBER, "5"},
+		{token.INTEGER, "5"},
 		{token.SEMICOLON, ";"},
 		{token.LET, "let"},
 		{token.IDENTIFIER, "ten"},
 		{token.ASSIGN, "="},
-		{token.NUMBER, "10"},
+		{token.INTEGER, "10"},
 		{token.SEMICOLON, ";"},
 		{token.LET, "let"},
 		{token.IDENTIFIER, "add"},
@@ -227,19 +227,19 @@ return false;
 		{token.MINUS, "-"},
 		{token.SLASH, "/"},
 		{token.ASTERISK, "*"},
-		{token.NUMBER, "5"},
+		{token.INTEGER, "5"},
 		{token.SEMICOLON, ";"},
-		{token.NUMBER, "5"},
+		{token.INTEGER, "5"},
 		{token.LESSER_THAN, "<"},
-		{token.NUMBER, "10"},
+		{token.INTEGER, "10"},
 		{token.GREATER_THAN, ">"},
-		{token.NUMBER, "5"},
+		{token.INTEGER, "5"},
 		{token.SEMICOLON, ";"},
 		{token.IF, "if"},
 		{token.LPAREN, "("},
-		{token.NUMBER, "5"},
+		{token.INTEGER, "5"},
 		{token.LESSER_THAN, "<"},
-		{token.NUMBER, "10"},
+		{token.INTEGER, "10"},
 		{token.RPAREN, ")"},
 		{token.LBRACE, "{"},
 		{token.RETURN, "return"},
@@ -253,13 +253,13 @@ return false;
 		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
 		
-		{token.NUMBER, "10"},
+		{token.INTEGER, "10"},
 		{token.EQUAL, "=="},
-		{token.NUMBER, "10"},
+		{token.INTEGER, "10"},
 		{token.SEMICOLON, ";"},
-		{token.NUMBER, "10"},
+		{token.FLOAT, "10.5"},
 		{token.NOT_EQUAL, "!="},
-		{token.NUMBER, "9"},
+		{token.INTEGER, "9"},
 		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}
@@ -272,13 +272,13 @@ return false;
 		
 		if _token.Literal != tt.expectedLiteral {
 			t.Fatalf(
-				"[test #%d] - wrong token literal. expected literal %q, got %q\n",
+				"[test #%d] - Wrong token literal. Expected literal %q, got %q\n",
 				i, tt.expectedLiteral, _token.Literal,
 			)
 		}
 		if _token.Type != tt.expectedType {
 			t.Fatalf(
-				"[test #%d] - wrong token type. expected %d, got %d\n",
+				"[test #%d] - Wrong token type. Expected %d, got %d\n",
 				i, tt.expectedType, _token.Type,
 			)
 		}

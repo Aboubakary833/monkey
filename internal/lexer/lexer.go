@@ -23,9 +23,10 @@ func (lex *Lexer) NextToken() (_token token.Token) {
 	case lex.char == 0:
 		_token = lex.newToken(token.EOF, "")
 
-	case lex.isStartOfNumber():
-		_token.Literal = lex.readNumber(lex.char == '-')
-		_token.Type = token.NUMBER
+	case helper.IsDigit(lex.char):
+		literal, _type := lex.readNumber()
+		_token.Literal = literal
+		_token.Type = _type
 		return
 	
 	case lex.isStartOfTwoCharToken():
@@ -91,31 +92,27 @@ func (lex *Lexer) readWord() string {
 	return lex.input[currentPos:lex.currentPos]
 }
 
-// readNumber read and return a number wether if it's an int or a float,
-// a negative or a positive number
-func (lex *Lexer) readNumber(isNegative bool) string {
+// readNumber read and return a number and a boolean that specify
+// the type of the number. If true is return the number is an
+// integer, otherwise it's a float.
+func (lex *Lexer) readNumber() (string, token.TokenType) {
 	var number string
 
-	if isNegative {
-		number += string(lex.char)
-		lex.readChar()
-	}
-	isFloat := false
+	_type := token.INTEGER
 
-	for helper.IsDigit(lex.char) || (!isFloat && lex.char == '.') {
-		if lex.char == '.' {
-			isFloat = true
+	for helper.IsDigit(lex.char) || (_type == token.INTEGER && lex.char == '.') {
+		
+		if lex.char == '.' && helper.IsDigit(lex.peekChar()) {
+			_type = token.FLOAT
+			number += string(lex.char)
+		} else {
+			number += string(lex.char)
 		}
-		number += string(lex.char)
+		
 		lex.readChar()
 	}
 
-	return number
-}
-
-// isStartOfNumber check if the current char is the start of a number
-func (lex *Lexer) isStartOfNumber() bool {
-	return helper.IsDigit(lex.char) || (lex.char == '-' && helper.IsDigit(lex.peekChar()))
+	return number, _type
 }
 
 func (lex *Lexer) newToken(_type token.TokenType, literal string) token.Token {

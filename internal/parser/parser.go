@@ -5,6 +5,7 @@ import (
 	"monkey/internal/ast"
 	"monkey/internal/lexer"
 	"monkey/internal/token"
+	"strconv"
 )
 
 const (
@@ -44,8 +45,7 @@ func New(lex *lexer.Lexer) *Parser {
 	parser.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 
-	//Prefix/Infix parser functions maps registrations
-	parser.registerPrefix(token.IDENTIFIER, parser.parseIdentifier)
+	parser.registerPrefixesAndInfixes()
 
 	parser.nextToken()
 	parser.nextToken()
@@ -53,8 +53,26 @@ func New(lex *lexer.Lexer) *Parser {
 	return parser
 }
 
+// registerPrefixesAndInfixes register all prefix/infix
+// parsers functions.
+func (p *Parser) registerPrefixesAndInfixes() {
+
+	// Prefixes
+	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
+	p.registerPrefix(token.INTEGER, p.parseInteger)
+	p.registerPrefix(token.FLOAT, p.parseFloat)
+
+	// Infixes
+
+
+}
+
 func (p *Parser) Errors() []string {
 	return p.errors
+}
+
+func (p *Parser) addError(err string) {
+	p.errors = append(p.errors, err)
 }
 
 func (p *Parser) peekError(_type token.TokenType) {
@@ -63,7 +81,7 @@ func (p *Parser) peekError(_type token.TokenType) {
 		_type, p.peekToken.Type,
 	)
 
-	p.errors = append(p.errors, msg)
+	p.addError(msg)
 }
 
 func (p *Parser) nextToken() {
@@ -164,6 +182,34 @@ func (p *Parser) parseIdentifier() ast.Expression {
 		Token: p.currentToken,
 		Value: p.currentToken.Literal,
 	}
+}
+
+func (p *Parser) parseInteger() ast.Expression {
+	intLiteral := &ast.IntegerLiteral{ Token: p.currentToken }
+
+	value, err := strconv.ParseInt(p.currentToken.Literal, 0, 64)
+	
+	if err != nil {
+		msg := fmt.Sprintf("Could not parse %q as integer\n", p.currentToken.Literal)
+		p.addError(msg)
+	}
+	intLiteral.Value = value
+
+	return intLiteral
+}
+
+func (p *Parser) parseFloat() ast.Expression {
+	flotLiteral := &ast.FloatLiteral{ Token: p.currentToken }
+
+	value, err := strconv.ParseFloat(p.currentToken.Literal, 64)
+
+	if err != nil {
+		msg := fmt.Sprintf("Could not parse %q as float\n", p.currentToken.Literal)
+		p.addError(msg)
+	}
+	flotLiteral.Value = value
+
+	return flotLiteral
 }
 
 func (p *Parser) registerPrefix(_type token.TokenType, fn prefixParseFn) {
