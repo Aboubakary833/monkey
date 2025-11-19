@@ -2,6 +2,7 @@ package token
 
 import (
 	"maps"
+	"monkey/internal/helper"
 	"slices"
 )
 
@@ -75,7 +76,10 @@ var SPECIAL_CHARS = map[byte]TokenType{
 	']': RBRACKET,
 }
 
+var FLIPPED_SPECIAL_CHARS = helper.FlipMap(SPECIAL_CHARS)
+
 var SPECIAL_CHARS_KEYS = slices.AppendSeq([]byte{}, maps.Keys(SPECIAL_CHARS))
+
 
 var TWO_CHARS = map[string]TokenType{
 	"==": EQUAL,
@@ -83,6 +87,9 @@ var TWO_CHARS = map[string]TokenType{
 	"<=": LESSER_OR_EQUAL_TO,
 	">=": GREATER_OR_EQUAL_TO,
 }
+
+var FLIPPED_TWO_CHARS = helper.FlipMap(TWO_CHARS)
+
 
 var KEYWORDS = map[string]TokenType{
 	"fn": FUNCTION,
@@ -94,6 +101,20 @@ var KEYWORDS = map[string]TokenType{
 	"else": ELSE,
 	"return": RETURN,
 }
+
+var FLIPPED_KEYWORDS = helper.FlipMap(KEYWORDS)
+
+
+var OTHERS = map[string]TokenType{
+	"identifier": IDENTIFIER,
+	"integer": INTEGER,
+	"float": FLOAT,
+	"eof": EOF,
+	"illegal": ILLEGAL,
+}
+
+var FLIPPED_OTHERS = helper.FlipMap(OTHERS)
+
 
 type Token struct {
 	Type    TokenType
@@ -108,4 +129,25 @@ func LookupWord(w string) TokenType {
 	}
 
 	return IDENTIFIER
+}
+
+func GetLiteralByType(_type TokenType) string {
+
+	strValueMaps := []map[TokenType]string{
+		FLIPPED_TWO_CHARS,
+		FLIPPED_KEYWORDS,
+		FLIPPED_OTHERS,
+	}
+
+	if l, ok := FLIPPED_SPECIAL_CHARS[_type]; ok {
+		return string(l)
+	}
+	
+	for _, m := range strValueMaps {
+		if l, ok := m[_type]; ok {
+			return l
+		}
+	}
+	
+	return ""
 }

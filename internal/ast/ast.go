@@ -133,3 +133,47 @@ type FloatLiteral struct {
 func (fl *FloatLiteral) expressionNode() {}
 func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
 func (fl *FloatLiteral) String() string { return fl.Token.Literal }
+
+
+
+type PrefixExpression struct {
+	Token		token.Token
+	Operator	string
+	Right		Expression
+}
+func (pxe *PrefixExpression) expressionNode() {}
+func (pxe *PrefixExpression) TokenLiteral() string { return pxe.Token.Literal }
+
+func (pxe *PrefixExpression) String() string {
+	var output bytes.Buffer
+
+	output.WriteString("(")
+	output.WriteString(pxe.Operator)
+	output.WriteString(pxe.Right.String())
+	output.WriteString(")")
+
+	return output.String()
+}
+
+
+
+type InfixExpression struct {
+	Token		token.Token
+	Left		Expression
+	Operator	string
+	Right		Expression
+}
+func (ixf *InfixExpression) expressionNode() {}
+func (ixf *InfixExpression) TokenLiteral() string { return ixf.Token.Literal }
+
+func (ixf *InfixExpression) String() string {
+	var output bytes.Buffer
+
+	output.WriteString("(")
+	output.WriteString(ixf.Left.String())
+	output.WriteString(" " + ixf.Operator + " ")
+	output.WriteString(ixf.Right.String())
+	output.WriteString(")")
+
+	return output.String()
+}

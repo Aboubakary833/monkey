@@ -278,8 +278,8 @@ return false;
 		}
 		if _token.Type != tt.expectedType {
 			t.Fatalf(
-				"[test #%d] - Wrong token type. Expected %d, got %d\n",
-				i, tt.expectedType, _token.Type,
+				"[test #%d] - Wrong token type. Expected %q, got %q\n",
+				i, token.GetLiteralByType(tt.expectedType), token.GetLiteralByType(_token.Type),
 			)
 		}
 

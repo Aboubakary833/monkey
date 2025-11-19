@@ -1,6 +1,8 @@
 package helper
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestIsCharAllowedInKeyOrVar(t *testing.T) {
 	t.Run("it should return false", func(t *testing.T) {
@@ -63,4 +65,36 @@ func TestIsDigit(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestFlipMap(t *testing.T) {
+	
+	m := map[int]string{
+		1: "one",
+		2: "two",
+		3: "three",
+	}
+
+	fm := FlipMap(m)
+	i := 1
+
+	for k, v := range fm {
+
+		if k != m[i] {
+			t.Fatalf(
+				"Expecting %q, got %q\n",
+				k, m[i],
+			)
+		}
+
+		if v != i {
+			t.Fatalf(
+				"Expecting %d, got %d\n",
+				i, v,
+			)
+		}
+
+		i++
+	}
+
 }
