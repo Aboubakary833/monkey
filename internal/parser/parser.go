@@ -64,16 +64,19 @@ func New(lex *lexer.Lexer) *Parser {
 	return parser
 }
 
-// registerPrefixesAndInfixes register all prefix/infix
-// parsers functions.
+// registerPrefixesAndInfixes register all prefix/infix parser functions.
 func (p *Parser) registerPrefixesAndInfixes() {
 
 	// Prefixes
 	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
 	p.registerPrefix(token.INTEGER, p.parseInteger)
 	p.registerPrefix(token.FLOAT, p.parseFloat)
+	p.registerPrefix(token.TRUE, p.parseBoolean)
+	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
+	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefix(token.IF, p.parseIfExpression)
 
 	// Infixes
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -225,6 +228,13 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	}
 }
 
+func (p *Parser) parseBoolean() ast.Expression {
+	return &ast.Boolean{
+		Token: p.currentToken,
+		Value: p.currentTokenIs(token.TRUE),
+	}
+}
+
 func (p *Parser) parseInteger() ast.Expression {
 	intLiteral := &ast.IntegerLiteral{ Token: p.currentToken }
 
@@ -240,7 +250,7 @@ func (p *Parser) parseInteger() ast.Expression {
 }
 
 func (p *Parser) parseFloat() ast.Expression {
-	flotLiteral := &ast.FloatLiteral{ Token: p.currentToken }
+	floatLiteral := &ast.FloatLiteral{ Token: p.currentToken }
 
 	value, err := strconv.ParseFloat(p.currentToken.Literal, 64)
 
@@ -248,9 +258,9 @@ func (p *Parser) parseFloat() ast.Expression {
 		msg := fmt.Sprintf("Could not parse %q as float\n", p.currentToken.Literal)
 		p.addError(msg)
 	}
-	flotLiteral.Value = value
+	floatLiteral.Value = value
 
-	return flotLiteral
+	return floatLiteral
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
@@ -280,6 +290,80 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 	return expression
 }
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+
+	expr := p.parseExpression(LOWEST)
+
+	if !p.expectPeekTokenToBe(token.RPAREN) { return nil }
+
+	return expr
+}
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	expr := &ast.IfElseExpression{
+		Token: p.currentToken,
+	}
+
+	// NOTE:
+	// It could be interesting making `condition` parenthesis
+	// non mandatory like it is in languages like Go. But for now,
+	// I'll stick to it, and maybe change that in the future.
+	if !p.expectPeekTokenToBe(token.LPAREN) { return nil }
+
+	p.nextToken()
+
+	expr.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeekTokenToBe(token.RPAREN) || !p.expectPeekTokenToBe(token.LBRACE) {
+		return nil
+	}
+	expr.Consequence = p.parseBlockStatement()
+
+	// In case there is no `else`, we return the expression
+	// without the alternative block statement.
+	if !p.peekTokenIs(token.ELSE) {
+		return expr
+	}
+
+	p.nextToken()
+
+	if !p.expectPeekTokenToBe(token.LBRACE) {
+		return nil
+	}
+
+	expr.Alternative = p.parseBlockStatement()
+
+	return expr
+}
+
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{ Token: p.currentToken }
+	block.Statements = []ast.Statement{}
+
+	p.nextToken()
+
+	for !p.currentTokenIs(token.RBRACE) && !p.currentTokenIs(token.EOF) {
+		
+		stmt := p.parseExpressionStatement()
+
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+
+		p.nextToken()
+	}
+
+	return block
+}
+
+
+
+// Helper functions next:
+
+
 
 func (p *Parser) registerPrefix(_type token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[_type] = fn

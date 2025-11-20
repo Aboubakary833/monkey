@@ -122,7 +122,7 @@ type IntegerLiteral struct {
 }
 func (il *IntegerLiteral) expressionNode() {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
-func (il *IntegerLiteral) String() string { return il.Token.Literal }
+func (il *IntegerLiteral) String() string { return il.TokenLiteral() }
 
 
 
@@ -132,7 +132,17 @@ type FloatLiteral struct {
 }
 func (fl *FloatLiteral) expressionNode() {}
 func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
-func (fl *FloatLiteral) String() string { return fl.Token.Literal }
+func (fl *FloatLiteral) String() string { return fl.TokenLiteral() }
+
+
+
+type Boolean struct {
+	Token 		token.Token
+	Value		bool
+}
+func (b *Boolean) expressionNode() {}
+func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
+func (b *Boolean) String() string { return b.TokenLiteral() }
 
 
 
@@ -177,3 +187,45 @@ func (ixf *InfixExpression) String() string {
 
 	return output.String()
 }
+
+
+type BlockStatement struct {
+	Token			token.Token
+	Statements		[]Statement
+}
+func (block *BlockStatement) statementNode() {}
+func (block *BlockStatement) TokenLiteral() string { return block.Token.Literal }
+func (block *BlockStatement) String() string {
+	var output bytes.Buffer
+
+	for _, stmt := range block.Statements {
+		output.WriteString(stmt.String())
+	}
+
+	return output.String()
+}
+
+
+type IfElseExpression struct {
+	Token			token.Token
+	Condition		Expression
+	Consequence		*BlockStatement
+	Alternative		*BlockStatement
+}
+func (ieExpr *IfElseExpression) expressionNode() {}
+func (ieExpr *IfElseExpression) TokenLiteral() string { return ieExpr.Token.Literal }
+func (ieExpr *IfElseExpression) String() string {
+	var output bytes.Buffer
+
+	output.WriteString("if")
+	output.WriteString(ieExpr.Condition.String())
+	output.WriteString(ieExpr.Consequence.String())
+
+	if ieExpr.Alternative != nil {
+		output.WriteString("else")
+		output.WriteString(ieExpr.Alternative.String())
+	}
+
+	return output.String()
+}
+
