@@ -9,84 +9,59 @@ import (
 )
 
 func TestDeclarationStatement(t *testing.T) {
-	input := `const XYZ = 255;
-	let t = 10;
-	let foobar = 838383;`
-
-	lex := lexer.New(input)
-	parser := New(lex)
-
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
-
-	fmt.Println(len(program.Statements))
-
 	tests := []struct {
-		expectedIdentifier string
+		input				string
+		expectedIdentifier	string
+		expectedValue		any
 	}{
-		{"XYZ"},
-		{"t"},
-		{"foobar"},
+		{ "const PI = 3.14;", "PI", 3.14 },
+		{ "let ten = 10;", "ten", 10 },
+		{ "let foobar = 838383;", "foobar", 838383 },
 	}
 
-	for i, tt := range tests {
-		s := program.Statements[i]
-		name := tt.expectedIdentifier
+	for _, tt := range tests {
+		lex := lexer.New(tt.input)
+		parser := New(lex)
 
-		if !slices.Contains([]string{"const", "let"}, s.TokenLiteral()) {
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+		
+		stmt := program.Statements[0]
+
+		if !slices.Contains([]string{"const", "let"}, stmt.TokenLiteral()) {
 			t.Fatalf(
-				"[test #%d] - Expected statement to start with %q or %q, but got %q\n",
-				i, "const", "let", s.TokenLiteral(),
+				"Expected statement to start with %q or %q, but got %q\n",
+				"const", "let", stmt.TokenLiteral(),
 			)
 		}
 
-		dStmt, ok := s.(*ast.DeclarationStatement)
+		if !testDeclaration(t, stmt, tt.expectedIdentifier) { return }
 
-		if !ok {
-			t.Fatalf(
-				"[test #%d] - Expected s to be ast.DeclarationStatement, but got %T\n",
-				i, dStmt,
-			)
-		}
+		value := stmt.(*ast.DeclarationStatement).Value
 
-		if dStmt.Name.Value != name {
-			t.Fatalf(
-				"[test %d] - Expected statement Name field Value to be %q, but got %q\n",
-				i, name, dStmt.Name.Value,
-			)
-		}
-
-		if dStmt.Name.TokenLiteral() != name {
-			t.Fatalf(
-				"[test %d] - Expected statement.Name.TokenLiteral() method to return %q, but got %q\n",
-				i, name, dStmt.TokenLiteral(),
-			)
-		}
+		testLiteral(t, value, tt.expectedValue)
 
 	}
 }
 
 func TestReturnStatement(t *testing.T) {
-	input := `
-	return 5;
-	return 10;
-	return 993322;
-	`
-	lex := lexer.New(input)
-	parser := New(lex)
-
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
-
-	if len(program.Statements) != 3 {
-		t.Fatalf(
-			"Expected program.Statements to contains 3 statements, but got %d\n",
-			len(program.Statements),
-		)
+	tests := []struct{
+		input			string
+		returnValue		any
+	}{
+		{ "return 5;", 5 },
+		{ "return 10.5;", 10.5 },
+		{ "return 993322;", 993322 },
 	}
 
-	for _, stmt := range program.Statements {
-		returnStmt, ok := stmt.(*ast.ReturnStatement)
+	for _, tt := range tests {
+		lex := lexer.New(tt.input)
+		parser := New(lex)
+
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		stmt, ok := program.Statements[0].(*ast.ReturnStatement)
 
 		if !ok {
 			t.Errorf(
@@ -96,12 +71,14 @@ func TestReturnStatement(t *testing.T) {
 			continue
 		}
 
-		if returnStmt.TokenLiteral() != "return" {
+		if stmt.TokenLiteral() != "return" {
 			t.Errorf(
-				"Expected returnStmt.TokenLiteral() to return \"return\", but got %q\n",
-				returnStmt.TokenLiteral(),
+				"Expected stmt.TokenLiteral() to return \"return\", but got %q\n",
+				stmt.TokenLiteral(),
 			)
 		}
+
+		if !testLiteral(t, stmt.ReturnValue, tt.returnValue) { return }
 	}
 }
 
@@ -730,7 +707,10 @@ func TestFunctionCallParsing(t *testing.T) {
 	testInfix(t, fnCallExpr.Arguments[2], 4, "+", 5)
 }
 
+
+
 // Helpers functions next:
+
 
 func checkParserErrors(t *testing.T, parser *Parser) {
 	errors := parser.errors
@@ -746,6 +726,36 @@ func checkParserErrors(t *testing.T, parser *Parser) {
 	}
 	t.FailNow()
 }
+
+
+func testDeclaration(t *testing.T, stmt ast.Statement, name string) bool {
+
+		dStmt, ok := stmt.(*ast.DeclarationStatement)
+
+		if !ok {
+			t.Fatalf(
+				"Expected stmt to be ast.DeclarationStatement, but got %T\n",
+				dStmt,
+			)
+		}
+
+		if dStmt.Name.Value != name {
+			t.Fatalf(
+				"Expected statement Name field Value to be %q, but got %q\n",
+				name, dStmt.Name.Value,
+			)
+		}
+
+		if dStmt.Name.TokenLiteral() != name {
+			t.Fatalf(
+				"Expected statement.Name.TokenLiteral() method to return %q, but got %q\n",
+				name, dStmt.TokenLiteral(),
+			)
+		}
+
+	return true
+}
+
 
 func testLiteral(t *testing.T, expr ast.Expression, value any) bool {
 	switch _type := value.(type) {
@@ -920,16 +930,16 @@ func testFloatLiteral(t *testing.T, expr ast.Expression, value float64) bool {
 
 	if literal.Value != value {
 		t.Errorf(
-			"Expecting literal.Value to be '%.1f', but got '%.1f'\n",
+			"Expecting literal.Value to be '%g', but got '%g'\n",
 			value, literal.Value,
 		)
 
 		return false
 	}
 
-	if literal.TokenLiteral() != fmt.Sprintf("%.1f", value) {
+	if literal.TokenLiteral() != fmt.Sprintf("%g", value) {
 		t.Errorf(
-			"Expecting literal.TokenLiteral to return %s, but got %.1f\n",
+			"Expecting literal.TokenLiteral to return %s, but got %g\n",
 			literal.TokenLiteral(), value,
 		)
 

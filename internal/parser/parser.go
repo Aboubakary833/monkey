@@ -168,8 +168,10 @@ func (p *Parser) parseDeclarationStatement() *ast.DeclarationStatement {
 	if !p.expectPeekTokenToBe(token.ASSIGN) {
 		return nil
 	}
-	// TODO: We're skipping the expressions until we
-	// encounter a semicolon
+
+	p.nextToken()
+	stmt.Value = p.parseExpression(LOWEST)
+
 	for !p.currentTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -181,6 +183,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.currentToken}
 
 	p.nextToken()
+
+	stmt.ReturnValue = p.parseExpression(LOWEST)
 
 	for !p.currentTokenIs(token.SEMICOLON) {
 		p.nextToken()
