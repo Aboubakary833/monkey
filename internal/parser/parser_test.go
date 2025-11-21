@@ -129,9 +129,7 @@ func TestIdentifierExpression(t *testing.T) {
 		)
 	}
 
-	if !testIdentifier(t, stmt.Expression, "foobar") {
-		return
-	}
+	testIdentifier(t, stmt.Expression, "foobar")
 }
 
 func TestIntegerLiteralExpression(t *testing.T) {
@@ -158,9 +156,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 		)
 	}
 
-	if !testIntegerLiteral(t, stmt.Expression, 5) {
-		return
-	}
+	testIntegerLiteral(t, stmt.Expression, 5)
 }
 
 func TestFloatLiteralExpression(t *testing.T) {
@@ -187,9 +183,7 @@ func TestFloatLiteralExpression(t *testing.T) {
 		)
 	}
 
-	if !testFloatLiteral(t, stmt.Expression, 10.5) {
-		return
-	}
+	testFloatLiteral(t, stmt.Expression, 10.5)
 }
 
 func TestPrefixExpressionParsing(t *testing.T) {
@@ -237,10 +231,7 @@ func TestPrefixExpressionParsing(t *testing.T) {
 			)
 		}
 
-		if !testLiteral(t, expr.Right, tt.value) {
-			return
-		}
-
+		testLiteral(t, expr.Right, tt.value)
 	}
 }
 
@@ -286,9 +277,7 @@ func TestInfixExpressionParsing(t *testing.T) {
 			)
 		}
 
-		if !testInfix(t, stmt.Expression, tt.leftValue, tt.operator, tt.rightValue) {
-			return
-		}
+		testInfix(t, stmt.Expression, tt.leftValue, tt.operator, tt.rightValue)
 	}
 }
 
@@ -394,6 +383,18 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"3 + 4 * 5 == 3 * 1 + 4 * 5",
 			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
 		},
+		{
+			"a + add(b * c) + d",
+			"((a + add((b * c))) + d)",
+		},
+		{
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+		},
+		{
+			"add(a + b + c * d / f + g)",
+			"add((((a + b) + ((c * d) / f)) + g))",
+		},
 	}
 
 	for i, tt := range tests {
@@ -440,9 +441,7 @@ func TestBooleanExpression(t *testing.T) {
 			)
 		}
 
-		if !testBoolean(t, stmt.Expression, tt.value) {
-			return
-		}
+		testBoolean(t, stmt.Expression, tt.value)
 	}
 }
 
@@ -513,7 +512,6 @@ func TestIfElseExpression(t *testing.T) {
 			)
 		}
 	})
-
 
 	t.Run("IfElseExpression with alternative", func(t *testing.T) {
 		input := `if (x < y) { x } else { y }`
@@ -588,8 +586,148 @@ func TestIfElseExpression(t *testing.T) {
 			)
 		}
 
-		if !testIdentifier(t, alternative.Expression, "y") { return }
+		testIdentifier(t, alternative.Expression, "y")
 	})
+}
+
+func TestFunctionLiteralParsing(t *testing.T) {
+	input := `fn(x, y) { x + y}`
+	lex := lexer.New(input)
+	parser := New(lex)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf(
+			"Expecting program.Statements to contains 1 Statement, but got %d\n",
+			len(program.Statements),
+		)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting program.Statements[0] to be of type *ast.ExpressionStatement, but got %T\n",
+			stmt,
+		)
+	}
+
+	funcLiteral, ok := stmt.Expression.(*ast.FunctionLiteral)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting stmt.Expression to be of type *ast.FunctionLiteral, but got %T\n",
+			funcLiteral,
+		)
+	}
+
+	if len(funcLiteral.Params) != 2 {
+		t.Fatalf(
+			"Expecting funcLiteral.Params to contains 2 Params but got %d\n",
+			len(funcLiteral.Params),
+		)
+	}
+
+	if !testLiteral(t, funcLiteral.Params[0], "x") || !testLiteral(t, funcLiteral.Params[1], "y") {
+		return
+	}
+
+	bodyStmt, ok := funcLiteral.Body.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting funcLiteral.Body.Statements[0] to be of type *ast.ExpressionStatement, but got %T\n",
+			bodyStmt,
+		)
+	}
+
+	testInfix(t, bodyStmt.Expression, "x", "+", "y")
+}
+
+func TestFunctionParamsParsing(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedParams []string
+	}{
+		{input: "fn() {}", expectedParams: []string{}},
+		{input: "fn(x) {}", expectedParams: []string{"x"}},
+		{input: "fn(x, y, z) {}", expectedParams: []string{"x", "y", "z"}},
+	}
+
+	for i, tt := range tests {
+		lex := lexer.New(tt.input)
+		parser := New(lex)
+
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		function := stmt.Expression.(*ast.FunctionLiteral)
+
+		if len(function.Params) != len(tt.expectedParams) {
+			t.Fatalf(
+				"[test #%d]Expecting function.Params to contains %d Params, but got %d\n",
+				i, len(tt.expectedParams), len(function.Params),
+			)
+		}
+
+		for i, param := range tt.expectedParams {
+			testLiteral(t, function.Params[i], param)
+		}
+	}
+}
+
+func TestFunctionCallParsing(t *testing.T) {
+	input := `add(1, 2 * 3, 4 + 5);`
+	lex := lexer.New(input)
+	parser := New(lex)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf(
+			"Expecting program.Statements to contains 1 Statement, but got %d\n",
+			len(program.Statements),
+		)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting program.Statements[0] to be of type *ast.ExpressionStatement, but got %T\n",
+			stmt,
+		)
+	}
+
+	fnCallExpr, ok := stmt.Expression.(*ast.FunctionCallExpression)
+
+	if !ok {
+		t.Fatalf(
+			"Expecting stmt.Expression to be of type *ast.FunctionCallExpression, but got %T\n",
+			fnCallExpr,
+		)
+	}
+
+	if !testIdentifier(t, fnCallExpr.Function, "add") {
+		return
+	}
+
+	if len(fnCallExpr.Arguments) != 3 {
+		t.Fatalf(
+			"Expecting fnCallExpr.Arguments to contains 3 Arguments, but got %d\n",
+			len(fnCallExpr.Arguments),
+		)
+	}
+
+	if !testLiteral(t, fnCallExpr.Arguments[0], 1) ||
+		!testInfix(t, fnCallExpr.Arguments[1], 2, "*", 3) {
+		return
+	}
+	testInfix(t, fnCallExpr.Arguments[2], 4, "+", 5)
 }
 
 // Helpers functions next:

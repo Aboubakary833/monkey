@@ -50,7 +50,6 @@ type DeclarationStatement struct {
 
 func (ds *DeclarationStatement) statementNode() {}
 func (ds *DeclarationStatement) TokenLiteral() string { return ds.Token.Literal }
-
 func (ds *DeclarationStatement) String() string {
 	var output bytes.Buffer
 
@@ -84,7 +83,6 @@ type ReturnStatement struct {
 }
 func (rs *ReturnStatement) statementNode() {}
 func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }
-
 func (rs *ReturnStatement) String() string {
 	var output bytes.Buffer
 
@@ -106,7 +104,6 @@ type ExpressionStatement struct {
 }
 func (es *ExpressionStatement) statementNode() {}
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
-
 func (es *ExpressionStatement) String() string {
 
 	if es.Expression != nil {
@@ -153,7 +150,6 @@ type PrefixExpression struct {
 }
 func (pxe *PrefixExpression) expressionNode() {}
 func (pxe *PrefixExpression) TokenLiteral() string { return pxe.Token.Literal }
-
 func (pxe *PrefixExpression) String() string {
 	var output bytes.Buffer
 
@@ -175,7 +171,6 @@ type InfixExpression struct {
 }
 func (ixf *InfixExpression) expressionNode() {}
 func (ixf *InfixExpression) TokenLiteral() string { return ixf.Token.Literal }
-
 func (ixf *InfixExpression) String() string {
 	var output bytes.Buffer
 
@@ -229,3 +224,53 @@ func (ieExpr *IfElseExpression) String() string {
 	return output.String()
 }
 
+
+
+type FunctionLiteral struct {
+	Token		token.Token
+	Params		[]*Identifier
+	Body		*BlockStatement
+}
+func (fn *FunctionLiteral) expressionNode() {}
+func (fn *FunctionLiteral) TokenLiteral() string { return fn.Token.Literal }
+func (fn *FunctionLiteral) String() string {
+	var output bytes.Buffer
+
+	output.WriteString("fn")
+	
+	for _, param := range fn.Params {
+		output.WriteString(param.String())
+	}
+	output.WriteString(fn.Body.String())
+
+	return output.String()
+}
+
+
+
+type FunctionCallExpression struct {
+	Token		token.Token
+	Function	Expression // Identifier or FunctionLiteral
+	Arguments	[]Expression
+}
+func (fnCall *FunctionCallExpression) expressionNode() {}
+func (fnCall *FunctionCallExpression) TokenLiteral() string { return fnCall.Token.Literal }
+func (fnCall *FunctionCallExpression) String() string {
+	var output bytes.Buffer
+	var lastIdx = len(fnCall.Arguments) - 1
+
+	output.WriteString(fnCall.Function.String())
+	output.WriteString("(")
+
+	for i, arg := range fnCall.Arguments {
+		output.WriteString(arg.String())
+		
+		if i < lastIdx {
+			output.WriteString(", ")
+		}
+	}
+
+	output.WriteString(")")
+
+	return output.String()
+}

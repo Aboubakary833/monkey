@@ -16,7 +16,7 @@ const (
 	SUM // addition(+)
 	PRODUCT // *
 	PREFIX // -x or !x
-	CALL // myFunc(x)
+	FUNC_CALL // myFunc(x)
 )
 
 var precedences = map[token.TokenType]int{
@@ -28,6 +28,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS: SUM,
 	token.SLASH: PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.LPAREN: FUNC_CALL,
 }
 
 type (
@@ -77,6 +78,7 @@ func (p *Parser) registerPrefixesAndInfixes() {
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseIfExpression)
+	p.registerPrefix(token.FUNCTION, p.parseFunction)
 
 	// Infixes
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -87,6 +89,7 @@ func (p *Parser) registerPrefixesAndInfixes() {
 	p.registerInfix(token.NOT_EQUAL, p.parseInfixExpression)
 	p.registerInfix(token.LESSER_THAN, p.parseInfixExpression)
 	p.registerInfix(token.GREATER_THAN, p.parseInfixExpression)
+	p.registerInfix(token.LPAREN, p.parseFunctionCall)
 
 }
 
@@ -357,6 +360,86 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	}
 
 	return block
+}
+
+
+func (p *Parser) parseFunction() ast.Expression {
+	fnExpr := &ast.FunctionLiteral{ Token: p.currentToken }
+
+	if !p.expectPeekTokenToBe(token.LPAREN) {
+		return nil
+	}
+	fnExpr.Params = p.parseFunctionParams()
+
+	if !p.expectPeekTokenToBe(token.LBRACE) {
+		return nil
+	}
+
+	fnExpr.Body = p.parseBlockStatement()
+
+	return fnExpr
+}
+
+func (p *Parser) parseFunctionParams() []*ast.Identifier {
+	params := []*ast.Identifier{}
+	p.nextToken()
+
+	if p.currentTokenIs(token.RPAREN) {
+		return params
+	}
+
+	param := &ast.Identifier{ Token: p.currentToken, Value: p.currentToken.Literal }
+	params = append(params, param)
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		
+		param := &ast.Identifier{ Token: p.currentToken, Value: p.currentToken.Literal }
+		params = append(params, param)
+	}
+
+	if !p.expectPeekTokenToBe(token.RPAREN) {
+		return nil
+	}
+
+	return params
+}
+
+
+func (p *Parser) parseFunctionCall(function ast.Expression) ast.Expression {
+	fnCall := &ast.FunctionCallExpression{
+		Token: p.currentToken,
+		Function: function,
+	}
+	fnCall.Arguments = p.parseFunctionCallArguments()
+
+	return fnCall
+}
+
+func (p *Parser) parseFunctionCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeekTokenToBe(token.RPAREN) {
+		return nil
+	}
+
+	return args
 }
 
 
