@@ -235,12 +235,20 @@ func (fn *FunctionLiteral) expressionNode() {}
 func (fn *FunctionLiteral) TokenLiteral() string { return fn.Token.Literal }
 func (fn *FunctionLiteral) String() string {
 	var output bytes.Buffer
+	var lastIdx = len(fn.Params) - 1
 
-	output.WriteString("fn")
-	
-	for _, param := range fn.Params {
+	output.WriteString(fn.TokenLiteral())
+	output.WriteString("(")
+
+	for i, param := range fn.Params {
 		output.WriteString(param.String())
+		
+		if i < lastIdx {
+			output.WriteString(", ")
+		}
 	}
+
+	output.WriteString(") ")
 	output.WriteString(fn.Body.String())
 
 	return output.String()
