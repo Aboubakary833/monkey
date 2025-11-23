@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"monkey/internal/evaluator"
 	"monkey/internal/lexer"
 	"monkey/internal/parser"
 	"time"
@@ -41,8 +42,15 @@ func Start(input io.Reader, output io.Writer) {
 			continue
 		}
 
-		io.WriteString(output, program.String())
-		io.WriteString(output, "\n")
+		result := evaluator.Eval(program)
+		
+		if result != nil {
+			io.WriteString(output, result.Inspect())
+			io.WriteString(output, "\n")
+			continue
+		}
+
+		io.WriteString(output, "null\n")
 	}
 }
 
