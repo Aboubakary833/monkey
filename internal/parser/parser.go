@@ -290,7 +290,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 		Left: left,
 		Operator: p.currentToken.Literal,
 	}
-	precedence := precedences[p.currentToken.Type]
+	precedence := p.currentPrecedence()
 	
 	p.nextToken()
 
@@ -354,12 +354,7 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	p.nextToken()
 
 	for !p.currentTokenIs(token.RBRACE) && !p.currentTokenIs(token.EOF) {
-		
-		stmt := p.parseExpressionStatement()
-
-		if stmt != nil {
-			block.Statements = append(block.Statements, stmt)
-		}
+		block.Statements = append(block.Statements, p.parseStatement())
 
 		p.nextToken()
 	}

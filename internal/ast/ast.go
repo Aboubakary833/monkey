@@ -214,10 +214,11 @@ func (ieExpr *IfElseExpression) String() string {
 
 	output.WriteString("if")
 	output.WriteString(ieExpr.Condition.String())
+	output.WriteString(" ")
 	output.WriteString(ieExpr.Consequence.String())
 
 	if ieExpr.Alternative != nil {
-		output.WriteString("else")
+		output.WriteString(" else ")
 		output.WriteString(ieExpr.Alternative.String())
 	}
 

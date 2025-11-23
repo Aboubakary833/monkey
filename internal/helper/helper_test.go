@@ -94,7 +94,7 @@ func TestFlipMap(t *testing.T) {
 			)
 		}
 
-		i++
+		i += 1
 	}
 
 }
