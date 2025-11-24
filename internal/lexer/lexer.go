@@ -18,7 +18,7 @@ func (lex *Lexer) NextToken() (_token token.Token) {
 
 	lex.skipWhitespace()
 
-	switch true {
+	switch {
 
 	case lex.char == 0:
 		_token = lex.newToken(token.EOF, "")

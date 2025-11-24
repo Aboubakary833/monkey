@@ -17,6 +17,17 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{ "187", 187 },
 		{ "-20", -20 },
 		{ "-3", -3 },
+		{"5 + 5 + 5 + 5 - 10", 10},
+		{"2 * 2 * 2 * 2 * 2", 32},
+		{"-50 + 100 + -50", 0},
+		{"5 * 2 + 10", 20},
+		{"5 + 2 * 10", 25},
+		{"20 + 2 * -10", 0},
+		{ "12 % 10", 2 },
+		{"50 / 2 * 2 + 10", 60},
+		{"2 * (5 + 10)", 30},
+		{"3 * 3 * 3 + 10", 37},
+		{"3 * (3 * 3) + 10", 37},
 	}
 
 	for _, tt := range tests {
@@ -36,6 +47,15 @@ func TestEvalFloatExpression(t *testing.T) {
 		{ ".25", 0.25 },
 		{ "-23.1", -23.1 },
 		{ "-18.5", -18.5 },
+		{"5.25 + 5.25 + 5.25 + 5.50 - 10", 11.25},
+		{"2.5 * 2.5 * 2.5 * 2", 31.25},
+		{"-50 + 100 + -50.50", -0.5},
+		{"5 * 2.5 + 10", 22.5},
+		{"5 + 2 * 10.25", 25.5},
+		{"50 / 2 * 2 + 10.5", 60.5},
+		{ "10.5 % 10", 0.5 },
+		{"2.5 * (5.5 + 10)", 38.75},
+		{"3 * 3 * 3 + 10.75", 37.75},
 	}
 
 	for _, tt := range tests {
@@ -54,6 +74,25 @@ func TestEvalBooleanExpression(t *testing.T) {
 	}{
 		{ "true", true },
 		{ "false", false },
+		{ "1 < 2", true },
+		{ "1 > 2", false },
+		{ "1 < 1", false },
+		{ "1 > 1", false },
+		{ "1 == 1", true },
+		{ "1 != 1", false },
+		{ "1 == 2", false },
+		{ "1 != 2", true },
+		{ "1 >= 0", true },
+		{ "2 <= 1", false },
+		{"true == true", true},
+		{"false == false", true},
+		{"true == false", false},
+		{"true != false", true},
+		{"false != true", true},
+		{"(1 < 2) == true", true},
+		{"(1 < 2) == false", false},
+		{"(1 > 2) == true", false},
+		{"(1 > 2) == false", true},
 	}
 
 		for _, tt := range tests {
@@ -98,7 +137,7 @@ func testIntegerObject(t *testing.T, got object.Object, expected int64) bool {
 	if !ok {
 		t.Errorf(
 			"Expecting obj to be of type object.Integer, but got %T\n",
-			obj,
+			got,
 		)
 
 		return false
@@ -123,7 +162,7 @@ func testFloatObject(t *testing.T, got object.Object, expected float64) bool {
 	if !ok {
 		t.Errorf(
 			"Expecting obj to be of type object.Float, but got %T\n",
-			obj,
+			got,
 		)
 
 		return false
@@ -148,7 +187,7 @@ func testBooleanObject(t *testing.T, got object.Object, expected bool) bool {
 	if !ok {
 		t.Errorf(
 			"Expecting obj to be of type object.Boolean, but got %T\n",
-			obj,
+			got,
 		)
 
 		return false

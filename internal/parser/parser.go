@@ -13,8 +13,10 @@ const (
 	LOWEST
 	EQUALS // comparision(==)
 	LESS_OR_GREATER // < or >
+	LESS_GREATER_OR_EQUAL // <= or >=
 	SUM // addition(+)
-	PRODUCT // *
+	PRODUCT // * or /
+	REMAINDER // %
 	PREFIX // -x or !x
 	FUNC_CALL // myFunc(x)
 )
@@ -24,10 +26,13 @@ var precedences = map[token.TokenType]int{
 	token.NOT_EQUAL: EQUALS,
 	token.LESSER_THAN: LESS_OR_GREATER,
 	token.GREATER_THAN: LESS_OR_GREATER,
+	token.LESSER_OR_EQUAL_TO: LESS_GREATER_OR_EQUAL,
+	token.GREATER_OR_EQUAL_TO: LESS_GREATER_OR_EQUAL,
 	token.PLUS: SUM,
 	token.MINUS: SUM,
 	token.SLASH: PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.MODULO: REMAINDER,
 	token.LPAREN: FUNC_CALL,
 }
 
@@ -84,11 +89,14 @@ func (p *Parser) registerPrefixesAndInfixes() {
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
+	p.registerInfix(token.MODULO, p.parseInfixExpression)
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
 	p.registerInfix(token.EQUAL, p.parseInfixExpression)
 	p.registerInfix(token.NOT_EQUAL, p.parseInfixExpression)
 	p.registerInfix(token.LESSER_THAN, p.parseInfixExpression)
 	p.registerInfix(token.GREATER_THAN, p.parseInfixExpression)
+	p.registerInfix(token.LESSER_OR_EQUAL_TO, p.parseInfixExpression)
+	p.registerInfix(token.GREATER_OR_EQUAL_TO, p.parseInfixExpression)
 	p.registerInfix(token.LPAREN, p.parseFunctionCall)
 
 }
